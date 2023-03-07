@@ -20,7 +20,7 @@ router.post("/login", async (request, response) => {
   if (isValid) {
     console.log("Authenticated Successfully!");
     //request.session.user = userDB;
-    return response.status(200).send({username: userDB.username, 
+    return response.status(200).send({id: userDB._id, username: userDB.username, 
       firstName: userDB.firstName, lastName: userDB.lastName});
   } 
   else {
