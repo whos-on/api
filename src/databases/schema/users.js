@@ -11,20 +11,20 @@ const UserSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    require: true,
+    required: true,
   },
-  firstname: {
+  firstName: {
     type: String,
-    require: true,
+    required: true,
   },
-  lastname: {
+  lastName: {
     type: String,
-    require: true,
+    required: true,
   },
   location: [String],
-  friend: [],
+  friends: [],
   pending: [],
-  request: [],
+  requests: [],
 });
 
 module.exports = mongoose.model("users", UserSchema);
