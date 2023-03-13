@@ -28,5 +28,3 @@ app.use(express.json());
 app.use("/api/user", userRoute);
 
 app.use("/api/friend", friendRoute);
-
-
