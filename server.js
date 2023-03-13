@@ -4,6 +4,8 @@ require("dotenv").config();
 
 const userRoute = require("./src/routes/user");
 
+const friendRoute = require("./src/routes/friend");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -24,5 +26,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 app.use("/api/user", userRoute);
+
+app.use("/api/friend", friendRoute);
 
 

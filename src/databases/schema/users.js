@@ -21,10 +21,17 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  location: [String],
-  friends: [],
-  pending: [],
-  requests: [],
+  stat: {
+    status: {type: String},
+    lastUpdated: {type: Date}
+  },
+  location: {
+    longitude: {type: String},
+    latitude: {type: String}
+  },
+  friends: [Schema.Types.ObjectId],
+  pending: [String],
+  requests: [String],
 });
 
 module.exports = mongoose.model("users", UserSchema);

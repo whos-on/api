@@ -6,7 +6,7 @@ const { hashPassword, comparePassword } = require("../utils/helpers");
 //Handle logins:
 //Incoming: email/password 
 //Outgoing: response code or username/firstName/lastName
-router.post("/login", async (request, response) => {
+router.get("/login", async (request, response) => {
   const { email, password } = request.body;
   //Check for empty request
   if (!email || !password) 
@@ -48,6 +48,19 @@ router.post("/register", async (request, response) => {
       firstName, lastName });
     response.sendStatus(201);
   }
+});
+
+//Refresh a users status and location, and return all friend related lists to check for changes
+//Incoming: user's object _id, current status, current location
+//Outgoing: user's friend list, pending list, and requests list
+router.put("/refresh", async (request, response) => {
+    const {user, stat, loc} = request.body;
+    userObj = await User.findById(user);
+    //Update the status and location
+    User.findByIdAndUpdate(id, { $set: {"stat.status": stat, "stat.lastUpdated": Date.now(), "location.longitude" : loc.longitude,
+     "location.latitude": loc.latitude} });
+    //Send back the friend stuff
+    return response.status(200).send({friends: userObj.friends, pending: userObj.pending, requests: userObj.requests});
 });
 
 module.exports = router;
