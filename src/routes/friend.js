@@ -7,12 +7,13 @@ const User = require("../databases/schema/users");
 //Outgoing: status 200/error will be empty
 router.put("/addFriend", async (request, response) => {
     const {user, search} = request.body;
+    const userObj = await User.findById(user);
     //search by username for the requestee, if not found, return an error
     const friendReq = await User.findOne({username : search});
     if(!friendReq) {
         return response.status(404).send({error: "No user exists for that username!"});
     }
-    User.findByIdAndUpdate(friendReq._id, { $push: { requests: user.username } });
+    User.findByIdAndUpdate(friendReq._id, { $push: { requests: userObj.username } });
     User.findByIdAndUpdate(user, { $push: { pending: friendReq.username } });
     return response.status(200).send({error: ""});
 });
@@ -25,7 +26,7 @@ router.put("/processRequest", async (request, response) => {
     const newFriendObj = User.findOne({username: requester});
     const newFriend = newFriendObj._id;
     //Check to see if the requester still exists
-    if(!newFriend) {
+    if(!newFriendObj) {
         return response.status(404).send({error: "This user doesn't exist anymore!"});
     }
     //Remove the requester from your requests list, and remove the user from the requester's pending list

@@ -29,7 +29,7 @@ const UserSchema = new mongoose.Schema({
     longitude: {type: String},
     latitude: {type: String}
   },
-  friends: [Schema.Types.ObjectId],
+  friends: [mongoose.Schema.Types.ObjectId],
   pending: [String],
   requests: [String],
 });
