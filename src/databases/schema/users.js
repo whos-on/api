@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+    lowercase: true
   },
   firstName: {
     type: String,
@@ -22,14 +23,20 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   stat: {
-    status: {type: String},
-    lastUpdated: {type: Date}
+    userStatus: {
+      type: String,
+      default: "Offline"
+    },
+    lastUpdated: {
+      type: Date,
+      default: () => Date.now(),
+    }
   },
   location: {
-    longitude: {type: String},
-    latitude: {type: String}
+    longitude: String,
+    latitude: String
   },
-  friends: [mongoose.Schema.Types.ObjectId],
+  friends: [mongoose.SchemaTypes.ObjectId],
   pending: [String],
   requests: [String],
 });
