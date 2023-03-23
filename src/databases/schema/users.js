@@ -2,29 +2,35 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
   username: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   password: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   email: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   firstName: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   lastName: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
-  location: [String],
-  friends: [],
-  pending: [],
-  requests: [],
+  location: [],
+  friends: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
+  ],
+  pending: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
+  ],
+  requests: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
+  ],
 });
 
 module.exports = mongoose.model("users", UserSchema);
