@@ -1,25 +1,25 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const UserSchema = new mongoose.Schema({
   username: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   password: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   email: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
     lowercase: true
   },
   firstName: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   lastName: {
-    type: String,
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
   stat: {
@@ -39,6 +39,6 @@ const UserSchema = new mongoose.Schema({
   friends: [mongoose.SchemaTypes.ObjectId],
   pending: [String],
   requests: [String],
-});
+})
 
-module.exports = mongoose.model("users", UserSchema);
+module.exports = mongoose.model("users", UserSchema)
