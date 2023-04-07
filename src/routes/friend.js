@@ -47,7 +47,7 @@ router.put("/processRequest", async (request, response) => {
 //Retrieve documents for all friends on a user's friend list
 //Incoming: user's object _id
 //Outgoing: array of friend documents called friends
-router.get("/retrieveFriends", async (request, response) => {
+router.get("/get", async (request, response) => {
     const id = request.body.id;
     const userObj = await User.findById(id);
     //our return array
@@ -61,11 +61,11 @@ router.get("/retrieveFriends", async (request, response) => {
 //Find all friend documents that match a given query
 //Incoming: user's object _id, username/firstName/lastName to search for
 //Outgoing: array of matching friend documents called friends
-router.get("/searchFriends", async (request, response) => {
+router.get("/search", async (request, response) => {
     const {id, search} = request.body;
     userObj = await User.findById(id);
     let _ret = new Array();
-    const regex = new RegExp("^" + search + "[a-z]*", "i");
+    const regex = new RegExp("^" + search + "[\w]*", "i");
     for(let i = 0; i < userObj.friends.length; i++) {
         //Flag for when our search comes up empty for this id
         let notFound = 0;

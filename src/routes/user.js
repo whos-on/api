@@ -6,7 +6,7 @@ const { hashPassword, comparePassword } = require("../utils/helpers");
 //Handle logins:
 //Incoming: email/password 
 //Outgoing: response code or username/firstName/lastName
-router.get("/login", async (request, response) => {
+router.post("/login", async (request, response) => {
   const { email, password } = request.body;
   //Check for empty request
   if (!email || !password) 
