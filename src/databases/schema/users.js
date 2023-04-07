@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const UserSchema = new mongoose.Schema({
   username: {
@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: mongoose.SchemaTypes.String,
     required: true,
+    lowercase: true
   },
   firstName: {
     type: mongoose.SchemaTypes.String,
@@ -21,16 +22,23 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.SchemaTypes.String,
     required: true,
   },
-  location: [],
-  friends: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
-  ],
-  pending: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
-  ],
-  requests: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
-  ],
-});
+  stat: {
+    userStatus: {
+      type: String,
+      default: "Offline"
+    },
+    lastUpdated: {
+      type: Date,
+      default: () => Date.now(),
+    }
+  },
+  location: {
+    longitude: String,
+    latitude: String
+  },
+  friends: [mongoose.SchemaTypes.ObjectId],
+  pending: [String],
+  requests: [String],
+})
 
-module.exports = mongoose.model("users", UserSchema);
+module.exports = mongoose.model("users", UserSchema)
