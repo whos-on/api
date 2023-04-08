@@ -69,7 +69,7 @@ router.post("/register", async (request, response) => {
       firstName,
       lastName,
     });
-    return response.status(201).send({error: "User created!"});
+    return response.status(201).send({error: null});
   }
 });
 
