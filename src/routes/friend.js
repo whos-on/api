@@ -44,6 +44,29 @@ router.put("/processRequest", async (request, response) => {
     return response.status(200).send({error: ""});
 });
 
+//Remove a friend from the user's friends list and remove the user from their ex-friend's friends list
+//Incoming: user's object _id, object _id of the friend to be removed
+//Outgoing: user's new friends list, error: friend removed
+router.put("/removeFriend", async (request, response) => {
+    const id = request.body.id;
+    const removed = request.body.removed;
+    if(id == null || id == undefined || id == "" || removed == null || removed == undefined || removed == "") return response.status(400).send({error: "Empty request."});
+    const userObj = await User.findById(id);
+    try {
+        const removedObj = await User.findById(removed);
+        //Check if the user is actually friends with this person
+        if(!userObj.friends.includes(removed)) return response.status(400).send({error: "You are not currently friends with this person!"});
+        //Remove the chosen person from the user's friends list
+        await User.findByIdAndUpdate(id, {$pull: {friends: removed}});
+        //Remove the user from the chosen person's friends list
+        await User.findByIdAndUpdate(removed, {$pull: {friends: id}});
+        return response.status(200).send({error: removedObj.username + " removed from friends"});
+    }
+    catch(error) {
+        return response.status(404).send({error: "Friend to be removed does not exist"});
+    }
+});
+
 //Retrieve documents for all friends on a user's friend list
 //Incoming: user's object _id
 //Outgoing: array of friend documents called friends
