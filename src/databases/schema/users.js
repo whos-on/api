@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: mongoose.SchemaTypes.String,
     required: true,
+    lowercase: true,
   },
   firstName: {
     type: mongoose.SchemaTypes.String,
@@ -21,16 +22,10 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.SchemaTypes.String,
     required: true,
   },
-  location: [],
-  friends: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
-  ],
-  pending: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
-  ],
-  requests: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
-  ],
+  location: [String],
+  friends: [],
+  pending: [],
+  requests: [],
 });
 
 module.exports = mongoose.model("users", UserSchema);
