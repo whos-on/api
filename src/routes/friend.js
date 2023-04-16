@@ -7,12 +7,22 @@ const User = require("../databases/schema/users");
 //Outgoing: status 200/error will be empty
 router.put("/addFriend", async (request, response) => {
     const {id, search} = request.body;
+    if(id == null || id == undefined || id == "" || search == null || search == undefined || search == "") return response.status(400).send({error: "Empty request."})
     const userObj = await User.findById(id);
     //search by username for the requestee, if not found, return an error
     const friendReq = await User.findOne({username : search});
-    if(!friendReq) {
+    if(friendReq == null || friendReq == undefined) {
         return response.status(404).send({error: "No user exists for that username!"});
     }
+    //Make sure that user isn't already friends with the receiver, and that they haven't already sent them a request
+    for(let i = 0; i < userObj.friends.length; i++) {
+        let friendObj = await User.findById(userObj.friends[i]);
+        if(friendObj.username == search) return response.status(400).send({error: "You are already friends with this person!"});
+    }
+    for(let i = 0; i < userObj.pending.length; i++) {
+        if(userObj.pending[i] == search) return response.status(400).send({error: "You already have an outgoing request to this person!"});
+    }
+    //Add users to their respective lists
     await User.findByIdAndUpdate(friendReq._id, { $push: { requests: userObj.username } });
     await User.findByIdAndUpdate(id, { $push: { pending: friendReq.username } });
     return response.status(200).send({error: ""});
@@ -25,12 +35,13 @@ router.put("/processRequest", async (request, response) => {
     const id = request.body.id;
     const requester = request.body.requester;
     const accept = request.body.accept;
-
+    if(id == null || id == undefined || id == "" || accept == null || accept == undefined || requester == null || requester == undefined) return response.status(400).send({
+        error: "Empty request."});
     const userObj = await User.findById(id);
     const newFriendObj = await User.findOne({username: requester});
     const newFriend = newFriendObj._id;
     //Check to see if the requester still exists
-    if(!newFriendObj) {
+    if(newFriendObj == null || newFriendObj == undefined) {
         return response.status(404).send({error: "This user doesn't exist anymore!"});
     }
     //Remove the requester from your requests list, and remove the user from the requester's pending list
@@ -49,6 +60,7 @@ router.put("/processRequest", async (request, response) => {
 //Outgoing: array of friend documents called friends
 router.get("/get", async (request, response) => {
     const id = request.body.id;
+    if(id == null || id == undefined || id == "") return response.status(400).send({error: "Empty request."});
     const userObj = await User.findById(id);
     //our return array
     let _ret = new Array();
@@ -63,6 +75,7 @@ router.get("/get", async (request, response) => {
 //Outgoing: array of matching friend documents called friends
 router.get("/search", async (request, response) => {
     const {id, search} = request.body;
+    if(id == null || id == undefined || id == "" || search == null || search == undefined) return response.status(400).send({error: "Empty request."});
     userObj = await User.findById(id);
     let _ret = new Array();
     const regex = new RegExp("^" + search + "[\w]*", "i");
