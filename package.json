@@ -9,13 +9,10 @@
   "author": "Michael Ha <michaelhabao@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@types/jest": "^29.5.0",
-    "@types/supertest": "^2.0.12",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "mongoose": "^7.0.1",
-    "ts-jest": "^29.0.5"
+    "mongoose": "^7.0.1"
   },
   "scripts": {
     "start": "node server.js",
@@ -28,8 +25,7 @@
   },
   "homepage": "https://github.com/whos-on/api#readme",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
+    "nodemon": "^2.0.21",
     "jest": "^29.5.0",
     "superagent": "^8.0.9",
     "supertest": "^6.3.3"

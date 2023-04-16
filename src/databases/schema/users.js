@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const UserSchema = new mongoose.Schema({
   username: {
@@ -22,10 +22,23 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.SchemaTypes.String,
     required: true,
   },
-  location: [String],
-  friends: [],
-  pending: [],
-  requests: [],
-});
+  stat: {
+    userStatus: {
+      type: String,
+      default: "Offline"
+    },
+    lastUpdated: {
+      type: Date,
+      default: () => Date.now(),
+    }
+  },
+  location: {
+    longitude: String,
+    latitude: String
+  },
+  friends: [mongoose.SchemaTypes.ObjectId],
+  pending: [String],
+  requests: [String],
+})
 
-module.exports = mongoose.model("users", UserSchema);
+module.exports = mongoose.model("users", UserSchema)

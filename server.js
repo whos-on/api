@@ -1,16 +1,16 @@
 // const express = require("express");
-const mongoose = require("mongoose");
-const app = require("./app");
-const PORT = process.env.PORT || 3000;
-const { MongoClient } = require("mongodb");
+const mongoose = require("mongoose")
+const app = require("./app")
+const { MongoClient } = require("mongodb")
 // require("./src/databases");
-require("dotenv").config();
+require("dotenv").config()
 
 // const userRoute = require("./src/routes/user");
-
 // const friendRoute = require("./src/routes/friend");
 
 // const app = express();
+
+const PORT = process.env.PORT || 3000
 
 // Turn on the database
 mongoose
@@ -20,9 +20,9 @@ mongoose
   })
   .then((result) => {
     //Only start listening once the database has connected
-    app.listen(PORT, () => console.log(`Server is running on PORT ${PORT}`));
+    app.listen(PORT, () => console.log(`Server is running on PORT ${ PORT }`))
   })
-  .catch((err) => console.log(err));
+  .catch((err) => console.log(err))
 
 // print out the method + url
 // app.use((req, res, next) => {
@@ -33,5 +33,4 @@ mongoose
 // app.use(express.json());
 
 // app.use("/api/user", userRoute);
-
 // app.use("/api/friend", friendRoute);
