@@ -8,6 +8,8 @@ const userRoute = require("./src/routes/user");
 
 const friendRoute = require("./src/routes/friend");
 
+const chatRoute = require("./src/routes/chat");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -33,3 +35,4 @@ app.use(express.json());
 
 app.use("/api/user", userRoute);
 app.use("/api/friend", friendRoute);
+app.use("/api/chat", chatRoute);

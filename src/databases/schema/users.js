@@ -39,6 +39,7 @@ const UserSchema = new mongoose.Schema({
   friends: [mongoose.SchemaTypes.ObjectId],
   pending: [String],
   requests: [String],
+  chats: [{type: mongoose.Schema.Types.ObjectId, ref: 'chats'}],
 })
 
 module.exports = mongoose.model("users", UserSchema)
