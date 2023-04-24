@@ -9,11 +9,12 @@ const { hashPassword, comparePassword } = require("../utils/helpers");
 router.post("/login", async (request, response) => {
   const { email, password } = request.body;
   //Check for empty request
-  if (!email || !password) return response.sendStatus(400);
+  if (email == null || email == undefined || email == "" || 
+      password == null || password == undefined || password == "") return response.status(400).send({error: "Empty request was sent!"});
 
   //Authenticate the user
   const userDB = await User.findOne({ email });
-  if (!userDB) return response.sendStatus(401);
+  if (userDB == null || userDB == undefined) return response.status(401).send({error: "Incorrect login information!"});
   const isValid = comparePassword(password, userDB.password);
   if (isValid) {
     console.log("Authenticated Successfully!");
@@ -29,7 +30,7 @@ router.post("/login", async (request, response) => {
   } else {
     //Incorrect password
     console.log("Failed to Authenticate");
-    return response.sendStatus(401);
+    return response.status(401).send({error: "Incorrect login information!"});
   }
 });
 
@@ -38,10 +39,25 @@ router.post("/login", async (request, response) => {
 //Outgoing: response code
 router.post("/register", async (request, response) => {
   const { email, password, username, firstName, lastName } = request.body;
+
+  //Check for empty request items, and ensure email and password are formatted properly
+  const emailRegex = /^([A-Z0-9_+-]+\.?)*[A-Z0-9_+-]@([A-Z0-9][A-Z0-9-]*\.)+[A-Z]{2,}$/i;
+  const passRegex = /^(?=.*\d)(?=.*[a-z]).{8,24}$/;
+  if(email == null || email == undefined || !emailRegex.test(email)) return response.status(400).send({error: "Invalid email! Check for @ symbol or extra dots."});
+  if(password == null || password == undefined || !passRegex.test(password)) return response.status(400).send({
+    error: "Invalid password! Passwords must be at least 8 characters and contain one lowercase letter and one number."});
+  if(username == null || username == undefined || username == "") return response.status(400).send({error: "Please enter a username!"});
+  if(firstName == null || firstName == undefined || firstName == "") return response.status(400).send({error: "Please enter a firstName!"});
+  if(lastName == null || lastName == undefined || lastName == "") return response.status(400).send({error: "Please enter a lastName!"});
+
   //Search for an existing user, return error 400 if one exists
-  const userDB = await User.findOne({ $or: [{ email }, { username }] });
+  const userDB = await User.findOne({username: username});
   if (userDB) {
-    response.status(400).send({ error: "User already exists!" });
+    return response.status(400).send({ error: "Username is taken!" });
+  }
+  const emailDB = await User.findOne({email: email});
+  if (emailDB) {
+    return response.status(400).send({ error: "Email currently in use!" });
   } else {
     //User does not exist, successfully create a new one
     const password = hashPassword(request.body.password);
@@ -53,7 +69,7 @@ router.post("/register", async (request, response) => {
       firstName,
       lastName,
     });
-    response.sendStatus(201);
+    return response.status(201).send({error: null});
   }
 });
 
@@ -62,6 +78,7 @@ router.post("/register", async (request, response) => {
 //Outgoing: user's friend list, pending list, and requests list
 router.put("/refresh", async (request, response) => {
     const id = request.body.id;
+    if(id == null || id == undefined || id == "") return response.status(400).send({error: "No id was sent..."});
     const stat = request.body.userStatus;
     const loc = request.body.location;
     userObj = await User.findById(id);
