@@ -93,7 +93,7 @@ router.put("/refresh", async (request, response) => {
 // Get info for a specific user by their id or username.
 // Incoming: user's object _id OR username
 // Outgoing: user's object _id, user's username, firstName, lastName, status
-router.get("/info", async (req, res) => {
+router.post("/info", async (req, res) => {
     const id = req.body?.id || null
     const username = req.body?.username || null
 
@@ -114,7 +114,7 @@ router.get("/info", async (req, res) => {
 // Search for a user by their username, first name, or last name.
 // Incoming: search query
 // Outgoing: array of user objects with _id, username, firstName, lastName, status
-router.get("/search", async (req, res) => {
+router.post("/search", async (req, res) => {
     const q = req.body?.query || null
     const limit = Math.min(req.body?.limit || 10, 100)
 
