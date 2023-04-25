@@ -9,7 +9,7 @@ const { hashPassword, comparePassword } = require("../utils/helpers");
 router.post("/login", async (request, response) => {
   const { email, password } = request.body;
   //Check for empty request
-  if (email == null || email == undefined || email == "" || 
+  if (email == null || email == undefined || email == "" ||
       password == null || password == undefined || password == "") return response.status(400).send({error: "Empty request was sent!"});
 
   //Authenticate the user
@@ -84,10 +84,29 @@ router.put("/refresh", async (request, response) => {
     userObj = await User.findById(id);
 
     //Update the status and location
-    await User.findByIdAndUpdate(id, {$set: {"stat.userStatus" : stat, "stat.lastUpdated": Date.now(), 
+    await User.findByIdAndUpdate(id, {$set: {"stat.userStatus" : stat, "stat.lastUpdated": Date.now(),
     "location.longitude" : loc.longitude, "location.latitude": loc.latitude} });
 
     return response.status(200).send({friends: userObj.friends, pending: userObj.pending, requests: userObj.requests});
 });
+
+// Get info for a specific user by their id.
+// Incoming: user's object _id
+// Outgoing: user's username, firstName, lastName, status
+router.get("/info", async (req, res) => {
+    const id = req.body?.id || null
+
+    if (!id) return res.status(400).send({ error: "No id was sent..." })
+
+    let query = await User.findById(id) || null
+    if (!query) return res.status(400).send({ error: "No user found with that id..." })
+
+    return res.status(200).send({
+        username: query.username,
+        firstName: query.firstName,
+        lastName: query.lastName,
+        status: query.stat.userStatus
+    })
+})
 
 module.exports = router;
