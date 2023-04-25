@@ -81,7 +81,7 @@ router.put("/removeFriend", async (request, response) => {
 //Retrieve documents for all friends on a user's friend list
 //Incoming: user's object _id
 //Outgoing: array of friend documents called friends
-router.get("/get", async (request, response) => {
+router.post("/get", async (request, response) => {
     const id = request.body.id;
     if(id == null || id == undefined || id == "") return response.status(400).send({error: "Empty request."});
     const userObj = await User.findById(id);
@@ -96,7 +96,7 @@ router.get("/get", async (request, response) => {
 //Find all friend documents that match a given query
 //Incoming: user's object _id, username/firstName/lastName to search for
 //Outgoing: array of matching friend documents called friends
-router.get("/search", async (request, response) => {
+router.post("/search", async (request, response) => {
     const {id, search} = request.body;
     if(id == null || id == undefined || id == "" || search == null || search == undefined) return response.status(400).send({error: "Empty request."});
     userObj = await User.findById(id);
