@@ -90,23 +90,49 @@ router.put("/refresh", async (request, response) => {
     return response.status(200).send({friends: userObj.friends, pending: userObj.pending, requests: userObj.requests});
 });
 
-// Get info for a specific user by their id.
-// Incoming: user's object _id
-// Outgoing: user's username, firstName, lastName, status
+// Get info for a specific user by their id or username.
+// Incoming: user's object _id OR username
+// Outgoing: user's object _id, user's username, firstName, lastName, status
 router.get("/info", async (req, res) => {
     const id = req.body?.id || null
+    const username = req.body?.username || null
 
-    if (!id) return res.status(400).send({ error: "No id was sent..." })
+    if (!id && !username) return res.status(400).send({ error: "No id or username was sent..." })
 
-    let query = await User.findById(id) || null
-    if (!query) return res.status(400).send({ error: "No user found with that id..." })
+    let query = await (id ? User.findById(id) : User.findOne({ username: username })) || null
+    if (!query) return res.status(400).send({ error: "No user found..." })
 
     return res.status(200).send({
+        id: query._id,
         username: query.username,
         firstName: query.firstName,
         lastName: query.lastName,
         status: query.stat.userStatus
     })
+})
+
+// Search for a user by their username, first name, or last name.
+// Incoming: search query
+// Outgoing: array of user objects with _id, username, firstName, lastName, status
+router.get("/search", async (req, res) => {
+    const q = req.body?.query || null
+    const limit = Math.min(req.body?.limit || 10, 100)
+
+    if (!q) return res.status(400).send({ error: "No query was sent..." })
+
+    let query = await User.find({
+        $or: [
+            { username: { $regex: q, $options: "i" } },
+            { firstName: { $regex: q, $options: "i" } },
+            { lastName: { $regex: q, $options: "i" } }
+        ]
+    }).limit(limit).select("_id username firstName lastName stat.userStatus")
+
+
+    return res.status(200).send(query.map((
+        { _id: id, username, firstName, lastName, stat: { userStatus: status } }) => {
+            return { id, username, firstName, lastName, status }
+    }) || [])
 })
 
 module.exports = router;
