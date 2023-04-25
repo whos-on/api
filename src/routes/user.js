@@ -92,7 +92,7 @@ router.put("/refresh", async (request, response) => {
 
 // Get info for a specific user by their id or username.
 // Incoming: user's object _id OR username
-// Outgoing: user's object _id, user's username, firstName, lastName, status
+// Outgoing: user's object _id, user's username, firstName, lastName, status, lastUpdated
 router.post("/info", async (req, res) => {
     const id = req.body?.id || null
     const username = req.body?.username || null
@@ -107,13 +107,14 @@ router.post("/info", async (req, res) => {
         username: query.username,
         firstName: query.firstName,
         lastName: query.lastName,
-        status: query.stat.userStatus
+        status: query.stat.userStatus,
+        lastUpdated: query.stat.lastUpdated
     })
 })
 
 // Search for a user by their username, first name, or last name.
 // Incoming: search query
-// Outgoing: array of user objects with _id, username, firstName, lastName, status
+// Outgoing: array of user objects with _id, username, firstName, lastName, status, lastUpdated
 router.post("/search", async (req, res) => {
     const q = req.body?.query || null
     const limit = Math.min(req.body?.limit || 10, 100)
@@ -126,12 +127,12 @@ router.post("/search", async (req, res) => {
             { firstName: { $regex: q, $options: "i" } },
             { lastName: { $regex: q, $options: "i" } }
         ]
-    }).limit(limit).select("_id username firstName lastName stat.userStatus")
+    }).limit(limit).select("_id username firstName lastName stat.userStatus stat.lastUpdated")
 
 
     return res.status(200).send(query.map((
-        { _id: id, username, firstName, lastName, stat: { userStatus: status } }) => {
-            return { id, username, firstName, lastName, status }
+        { _id: id, username, firstName, lastName, stat: { userStatus: status, lastUpdated } }) => {
+            return { id, username, firstName, lastName, status, lastUpdated }
     }) || [])
 })
 
