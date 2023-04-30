@@ -2,7 +2,6 @@ require("dotenv").config()
 const supertest = require("supertest")
 const app = require("../src/app")
 const mongoose = require("mongoose")
-const crypto = require("crypto")
 
 if (process.env.NODE_ENV == "production") {
     console.log("Cannot run tests in production mode")
@@ -271,5 +270,100 @@ describe("POST /api/user/info", () => {
         expect(res.statusCode).toBe(400)
         expect(res.body)
             .toHaveProperty("error", "No user found...")
+    })
+})
+
+describe("POST /api/user/search", () => {
+    beforeEach(async () => {
+        // Hacky way to create users asynchronously
+        for await (let i of [...Array(5).keys()]) {
+            await supertest(app).post("/api/user/register").send({
+                username: `test${ i }`,
+                password: "password123",
+                email: `test${ i }@gmail.com`,
+                firstName: `First${ i }`,
+                lastName: `Last${ i }`,
+            })
+        }
+        for await (let i of [...Array(2).keys()]) {
+            await supertest(app).post("/api/user/register").send({
+                username: `ababab${ i }`,
+                password: "password123",
+                email: `valid_email${ i }@gmail.com`,
+                firstName: `Random${ i }`,
+                lastName: `Last${ i }`,
+            })
+        }
+        await supertest(app).post("/api/user/register").send({
+            username: `NotSearchedFor`,
+            password: "password123",
+            email: `notsearchedfor@gmail.com`,
+            firstName: `NotSearchedFor`,
+            lastName: `NotSearchedFor`,
+        })
+    })
+
+    test("200 on success (username)", async () => {
+        const res = await supertest(app).post("/api/user/search").send({
+            query: "ababab",
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveLength(2)
+        expect(res.body[0]).toHaveProperty("id")
+        expect(res.body[0]).toHaveProperty("username")
+        expect(res.body[0]).toHaveProperty("firstName")
+        expect(res.body[0]).toHaveProperty("lastName")
+        expect(res.body[0]).toHaveProperty("status")
+        expect(res.body[0]).toHaveProperty("lastUpdated")
+    })
+
+    test("200 on success (firstName)", async () => {
+        const res = await supertest(app).post("/api/user/search").send({
+            query: "test",
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveLength(5)
+        expect(res.body[0]).toHaveProperty("id")
+        expect(res.body[0]).toHaveProperty("username")
+        expect(res.body[0]).toHaveProperty("firstName")
+        expect(res.body[0]).toHaveProperty("lastName")
+        expect(res.body[0]).toHaveProperty("status")
+        expect(res.body[0]).toHaveProperty("lastUpdated")
+    })
+
+    test("200 on success (lastName)", async () => {
+        const res = await supertest(app).post("/api/user/search").send({
+            query: "Last",
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveLength(7)
+        expect(res.body[0]).toHaveProperty("id")
+        expect(res.body[0]).toHaveProperty("username")
+        expect(res.body[0]).toHaveProperty("firstName")
+        expect(res.body[0]).toHaveProperty("lastName")
+        expect(res.body[0]).toHaveProperty("status")
+        expect(res.body[0]).toHaveProperty("lastUpdated")
+    })
+
+    test("200 on success (no results)", async () => {
+        const res = await supertest(app).post("/api/user/search").send({
+            query: "a valid search query but no results"
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveLength(0)
+    })
+
+    test("400 on invalid query", async () => {
+        const res = await supertest(app).post("/api/user/search").send({
+            query: "",
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body)
+            .toHaveProperty("error", "No query was sent...")
     })
 })
