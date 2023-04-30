@@ -8,20 +8,20 @@ if (process.env.NODE_ENV == "production") {
     process.exit(1)
 }
 
-describe("Test the user authentication/info routes (/api/user/*)", () => {
-    beforeEach(async () => {
-        await mongoose.connect(process.env.MONGODB_URL, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        })
+beforeEach(async () => {
+    return await mongoose.connect(process.env.MONGODB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
     })
+})
 
-    afterEach(async () => {
-        await mongoose.connection.db.dropCollection("users")
-        await mongoose.connection.close()
-    })
+afterEach(async () => {
+    await mongoose.connection.db.dropCollection("users")
+    return await mongoose.connection.close()
+})
 
-    test("(POST /api/user/register) 201 on success", async () => {
+describe("POST /api/user/register", () => {
+    test("201 on success", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "password123",
@@ -33,7 +33,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
         expect(res.statusCode).toBe(201)
     })
 
-    test("(POST /api/user/register) 400 on invalid email", async () => {
+    test("400 on invalid email", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "password123",
@@ -47,7 +47,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
             .toHaveProperty("error", "Invalid email! Check for @ symbol or extra dots.")
     })
 
-    test("(POST /api/user/register) 400 on invalid password", async () => {
+    test("400 on invalid password", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "A",
@@ -61,7 +61,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
             .toHaveProperty("error", "Invalid password! Passwords must be at least 8 characters and contain one lowercase letter and one number.")
     })
 
-    test("(POST /api/user/register) 400 on empty username", async () => {
+    test("400 on empty username", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "",
             password: "password123",
@@ -75,7 +75,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
             .toHaveProperty("error", "Please enter a username!")
     })
 
-    test("(POST /api/user/register) 400 on empty firstName", async () => {
+    test("400 on empty firstName", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "password123",
@@ -89,7 +89,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
             .toHaveProperty("error", "Please enter a firstName!")
     })
 
-    test("(POST /api/user/register) 400 on empty lastName", async () => {
+    test("400 on empty lastName", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "password123",
@@ -103,7 +103,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
             .toHaveProperty("error", "Please enter a lastName!")
     })
 
-    test("(POST /api/user/register) 400 on taken username", async () => {
+    test("400 on taken username", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "password123",
@@ -127,7 +127,7 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
             .toHaveProperty("error", "Username is taken!")
     })
 
-    test("(POST /api/user/register) 400 on taken email", async () => {
+    test("400 on taken email", async () => {
         const res = await supertest(app).post("/api/user/register").send({
             username: "test",
             password: "password123",
@@ -149,5 +149,69 @@ describe("Test the user authentication/info routes (/api/user/*)", () => {
         expect(res2.statusCode).toBe(400)
         expect(res2.body)
             .toHaveProperty("error", "Email currently in use!")
+    })
+})
+
+describe("POST /api/user/login", () => {
+    beforeEach(async () => {
+        return await supertest(app).post("/api/user/register").send({
+            username: "test",
+            password: "password123",
+            email: "test@gmail.com",
+            firstName: "First",
+            lastName: "Last",
+        })
+    })
+
+    test("200 on success", async () => {
+        const res = await supertest(app).post("/api/user/login").send({
+            email: "test@gmail.com",
+            password: "password123",
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveProperty("username", "test")
+        expect(res.body).toHaveProperty("firstName", "First")
+        expect(res.body).toHaveProperty("lastName", "Last")
+    })
+
+    test("400 on invalid email", async () => {
+        const res = await supertest(app).post("/api/user/login").send({
+            email: "",
+            password: "password123",
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body)
+            .toHaveProperty("error", "Empty request was sent!")
+    })
+
+    test("400 on invalid password", async () => {
+        const res = await supertest(app).post("/api/user/login").send({
+            email: "test@gmail.com",
+            password: "",
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body)
+            .toHaveProperty("error", "Empty request was sent!")
+    })
+
+    test("401 on incorrect email", async () => {
+        const res = await supertest(app).post("/api/user/login").send({
+            email: "testing@gmail.net",
+            password: "password123",
+        })
+    })
+
+    test("401 on incorrect password", async () => {
+        const res = await supertest(app).post("/api/user/login").send({
+            email: "test@gmail.com",
+            password: "password1234",
+        })
+
+        expect(res.statusCode).toBe(401)
+        expect(res.body)
+            .toHaveProperty("error", "Incorrect login information!")
     })
 })
