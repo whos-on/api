@@ -1,7 +1,8 @@
 require("dotenv").config()
-const supertest = require('supertest')
-const app = require('../src/app')
-const mongoose = require('mongoose')
+const supertest = require("supertest")
+const app = require("../src/app")
+const mongoose = require("mongoose")
+const crypto = require("crypto")
 
 if (process.env.NODE_ENV == "production") {
     console.log("Cannot run tests in production mode")
@@ -170,6 +171,7 @@ describe("POST /api/user/login", () => {
         })
 
         expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveProperty("id")
         expect(res.body).toHaveProperty("username", "test")
         expect(res.body).toHaveProperty("firstName", "First")
         expect(res.body).toHaveProperty("lastName", "Last")
@@ -213,5 +215,61 @@ describe("POST /api/user/login", () => {
         expect(res.statusCode).toBe(401)
         expect(res.body)
             .toHaveProperty("error", "Incorrect login information!")
+    })
+})
+
+describe("POST /api/user/info", () => {
+    beforeEach(async () => {
+        return await supertest(app).post("/api/user/register").send({
+            username: "test",
+            password: "password123",
+            email: "test@gmail.com",
+            firstName: "First",
+            lastName: "Last",
+        })
+    })
+
+    test("200 on success (username)", async () => {
+        const res = await supertest(app).post("/api/user/info").send({
+            username: "test",
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toHaveProperty("id")
+        expect(res.body).toHaveProperty("username", "test")
+        expect(res.body).toHaveProperty("firstName", "First")
+        expect(res.body).toHaveProperty("lastName", "Last")
+        expect(res.body).toHaveProperty("status")
+        expect(res.body).toHaveProperty("lastUpdated")
+    })
+
+    test("400 on invalid username", async () => {
+        const res = await supertest(app).post("/api/user/info").send({
+            username: "",
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body)
+            .toHaveProperty("error", "No id or username was sent...")
+    })
+
+    test("404 on invalid id", async () => {
+        const res = await supertest(app).post("/api/user/info").send({
+            id: "",
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body)
+            .toHaveProperty("error", "No id or username was sent...")
+    })
+
+    test("400 on non-existent username", async () => {
+        const res = await supertest(app).post("/api/user/info").send({
+            username: "test2",
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body)
+            .toHaveProperty("error", "No user found...")
     })
 })
