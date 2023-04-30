@@ -2,23 +2,9 @@ require("dotenv").config()
 const supertest = require("supertest")
 const app = require("../src/app")
 const mongoose = require("mongoose")
+const jestpreflight = require("./jestpreflight")
 
-if (process.env.NODE_ENV == "production") {
-    console.log("Cannot run tests in production mode")
-    process.exit(1)
-}
-
-beforeEach(async () => {
-    return await mongoose.connect(process.env.MONGODB_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
-})
-
-afterEach(async () => {
-    await mongoose.connection.db.dropCollection("users")
-    return await mongoose.connection.close()
-})
+jestpreflight()
 
 let idA = null, idB = null
 
