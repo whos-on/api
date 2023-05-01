@@ -151,4 +151,61 @@ router.post("/leave", async (request, response) => {
 });
 
 // ret.push(await Chat.findById(userObj.chats[i]))
+
+//Get all chat objects with unread messages, based on lastChecked times
+//Incoming: ID of the user who is logged in
+//Outgoing: Array of chat objects with unread messsages, an array matching the number of unreads in each
+router.get("/refreshMessages", async (request, response) => {
+  //Return-array placeholders
+  let unreadChats = [];
+  let unreadCounts = [];
+  //Declare user
+  const userId = request.body.userId;
+  let userObj = await User.findById(userId);
+  if(!userObj) {
+    response.status(404).send({error: "User ID does not match any user!"});
+  }
+  //Populate the chats for the user
+  await User.findById(userId)
+   .populate({
+      path: "chats" // populate chats
+   })
+   .then(async (popUserObj) => {
+      let chatObjs = [];
+      for(let i = 0; i < popUserObj.chats.length; i++) {
+        chatObjs[i] = popUserObj.chats[i];
+      }
+      if(!chatObjs) {
+        response.status(200).send({chats: unreadChats, counts: unreadCounts});
+      }
+      //For each chat, check it's messages and see if we have unchecked ones
+      for(let i = 0; i < chatObjs.length; i++) {
+        //Get the index in the checked array (matches name) and then find when this person
+        //last checked their messages
+        const checkedIndex = chatObjs[i].people.indexOf(userObj.username);
+        let checkedTime = chatObjs[i].lastChecked[checkedIndex];
+        checkedTime = checkedTime.getTime();
+        let newMessages = 0;
+        let j = chatObjs[i].messages.length - 1;
+        //Starting from the most recent messages, count all messages which were sent after the user last checked
+        while((j > -1 && (checkedTime < chatObjs[i].messages[j].timestamp.getTime()))) {
+          newMessages++;
+          j--;
+        }
+        //Refresh the lastChecked time
+        chatObjs[i].lastChecked[checkedIndex] = Date.now();
+        chatObjs[i].save();
+        if(newMessages > 0) {
+          unreadChats.push(chatObjs[i]);
+          unreadCounts.push(newMessages);
+        }
+      }
+      //Success, send response
+      response.status(200).send({chats: unreadChats, counts: unreadCounts}); 
+  })  
+  .catch(err => {
+    if(err) response.status(500).send({error: err});
+  });
+});
+
 module.exports = router;
