@@ -47,7 +47,15 @@ router.post("/create", (request, response) => {
 });
 
 // Send message between users in a same room
-// Incoming: id of the message group and who is the one to send the message
+// Incoming: chatId, sender and message
+// JSOn Format Example
+/*
+  {
+    "id": "6443d54e2c2c719dc1603bd7",
+    "sender": "GraftonL",
+    "message": "How are you?"
+  }
+*/
 // Outgoing: a new message has been sent
 router.post("/sendMessage", async (request, response) => {
   const chatId = request.body.id;
@@ -101,9 +109,15 @@ router.post("/sendMessage", async (request, response) => {
   response.status(200).send({ error: null });
 });
 
-// User want to leave a chat in the same room
-// Review chatId and userId
-
+/* User want to leave a chat in the same room
+// Incomming: chatId and userId
+// Outgoing: user has successfully out of the message
+JSOn Format example: 
+{
+    "chatId": "6443d67097750e1d31be1709",
+    "userId": "64094c978249a5505567b111"
+}
+*/
 router.post("/leave", async (request, response) => {
   const chatId = request.body.chatId;
   const userId = request.body.userId;
@@ -130,14 +144,14 @@ router.post("/leave", async (request, response) => {
       .send({ error: "User is not a member of the chat room" });
     return;
   }
-
+  // remove the chatRoom from User Object
   try {
     await User.updateOne({ _id: userId }, { $pull: { chats: `${chatId}` } });
   } catch (err) {
     response.status(500).send({ error: err });
     return;
   }
-
+  // remove the user from Chat Object
   try {
     await Chat.findByIdAndUpdate(chatId, {
       $pull: { people: `${username}` },
@@ -162,24 +176,24 @@ router.get("/refreshMessages", async (request, response) => {
   //Declare user
   const userId = request.body.userId;
   let userObj = await User.findById(userId);
-  if(!userObj) {
-    response.status(404).send({error: "User ID does not match any user!"});
+  if (!userObj) {
+    response.status(404).send({ error: "User ID does not match any user!" });
   }
   //Populate the chats for the user
   await User.findById(userId)
-   .populate({
-      path: "chats" // populate chats
-   })
-   .then(async (popUserObj) => {
+    .populate({
+      path: "chats", // populate chats
+    })
+    .then(async (popUserObj) => {
       let chatObjs = [];
-      for(let i = 0; i < popUserObj.chats.length; i++) {
+      for (let i = 0; i < popUserObj.chats.length; i++) {
         chatObjs[i] = popUserObj.chats[i];
       }
-      if(!chatObjs) {
-        response.status(200).send({chats: unreadChats, counts: unreadCounts});
+      if (!chatObjs) {
+        response.status(200).send({ chats: unreadChats, counts: unreadCounts });
       }
       //For each chat, check it's messages and see if we have unchecked ones
-      for(let i = 0; i < chatObjs.length; i++) {
+      for (let i = 0; i < chatObjs.length; i++) {
         //Get the index in the checked array (matches name) and then find when this person
         //last checked their messages
         const checkedIndex = chatObjs[i].people.indexOf(userObj.username);
@@ -188,24 +202,122 @@ router.get("/refreshMessages", async (request, response) => {
         let newMessages = 0;
         let j = chatObjs[i].messages.length - 1;
         //Starting from the most recent messages, count all messages which were sent after the user last checked
-        while((j > -1 && (checkedTime < chatObjs[i].messages[j].timestamp.getTime()))) {
+        while (
+          j > -1 &&
+          checkedTime < chatObjs[i].messages[j].timestamp.getTime()
+        ) {
           newMessages++;
           j--;
         }
         //Refresh the lastChecked time
         chatObjs[i].lastChecked[checkedIndex] = Date.now();
         chatObjs[i].save();
-        if(newMessages > 0) {
+        if (newMessages > 0) {
           unreadChats.push(chatObjs[i]);
           unreadCounts.push(newMessages);
         }
       }
       //Success, send response
-      response.status(200).send({chats: unreadChats, counts: unreadCounts}); 
-  })  
-  .catch(err => {
-    if(err) response.status(500).send({error: err});
-  });
+      response.status(200).send({ chats: unreadChats, counts: unreadCounts });
+    })
+    .catch((err) => {
+      if (err) response.status(500).send({ error: err });
+    });
+});
+
+/*
+  /get will get all of the chat each user has
+  // Incoming: userID
+  // Outgoing: all of the chat room that user have
+*/
+router.get("/get", async (request, response) => {
+  const id = request.body.id;
+  const user = await User.findById(id);
+
+  if (!user) {
+    response.status(404).send({ error: "User  not found" });
+    return;
+  }
+
+  const chatArray = user.chats;
+  if (chatArray.length == 0) {
+    response.status(404).send({ error: "User doesn't have any conversation" });
+    return;
+  }
+  // const chatArr = [];
+
+  // for (let i = 0; i < chatArray.length; i++) {
+  //   chatArr.push(chatArray[i]);
+  // }
+
+  // if (chatArr.length == 0) {
+  //   response.status(404).send({ error: "Not Success to get" });
+  // }
+  response.status(200).send(user.chats);
+});
+
+/*
+  /getMessage will get all of the message currently in the chatRoom
+  // Incoming: chatID
+  // Outgoing: all of the message in the chat room
+*/
+router.get("/getMessage", async (request, response) => {
+  const chatID = request.body.chatID;
+  const chatRoom = await Chat.findById(chatID);
+
+  if (!chatRoom) {
+    response.status(404).send({ error: "Chat room not found" });
+    return;
+  }
+
+  if (chatRoom.messages.length == 0) {
+    response.status(404).send({ error: "Doesn't have any message" });
+    return;
+  }
+  response.status(200).send(chatRoom.messages);
+});
+
+/*
+  Incoming: userId , message that need to search
+  Outgoing: the chatID that content search keyword
+*/
+router.get("/searchMessage", async (request, response) => {
+  const userId = request.body.id;
+  const search = request.body.search;
+  if (
+    userId == null ||
+    userId == undefined ||
+    userId == "" ||
+    search == null ||
+    search == undefined
+  )
+    return response.status(400).send({ error: "Empty request." });
+  userObj = await User.findById(userId);
+
+  if (!userObj) {
+    response.status(404).send({ error: "Can't find user." });
+    return;
+  }
+  let _ret = new Array();
+  const regex = new RegExp(search, "i");
+
+  for (let i = 0; i < userObj.chats.length; i++) {
+    const chatObj = await Chat.findById(userObj.chats[i]);
+    for (let j = 0; j < chatObj.messages.length; j++) {
+      let contents = chatObj.messages[j].contents;
+      if (contents.toLowerCase().match(regex)) {
+        _ret.push(chatObj.id);
+        break;
+      }
+    }
+  }
+
+  if (_ret.length == 0) {
+    response.status(404).send({ error: "Can't find message" });
+    return;
+  }
+
+  response.status(200).send(_ret);
 });
 
 module.exports = router;
