@@ -27,6 +27,7 @@ router.post("/login", async (request, response) => {
                 username: userDB.username,
                 firstName: userDB.firstName,
                 lastName: userDB.lastName,
+                verificationCode: userDB.verificationCode,
             })
     } else {
         //Incorrect password
@@ -106,16 +107,17 @@ router.post("/info", async (req, res) => {
 
     if (!id && !username) return res.status(400).send({ error: "No id or username was sent..." })
 
-    let query = await (id ? User.findById(id) : User.findOne({ username: username })) || null
-    if (!query) return res.status(400).send({ error: "No user found..." })
+    let user = await (id ? User.findById(id) : User.findOne({ username: username })) || null
+    if (!user) return res.status(400).send({ error: "No user found..." })
 
     return res.status(200).send({
-        id: query._id,
-        username: query.username,
-        firstName: query.firstName,
-        lastName: query.lastName,
-        status: query.stat.userStatus,
-        lastUpdated: query.stat.lastUpdated
+        id: user._id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        status: user.stat.userStatus,
+        lastUpdated: user.stat.lastUpdated,
+        verificationCode: user.verificationCode,
     })
 })
 
