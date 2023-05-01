@@ -9,6 +9,12 @@ module.exports = () => {
         process.exit(1)
     }
 
+    global.fetch = jest.fn(() => Promise.resolve({
+        json: () => Promise.resolve({ ok: true }),
+        status: 200,
+        okay: true,
+    }))
+
     beforeEach(async () => {
         mongoServer = await MongoMemoryServer.create()
         await mongoose.connect(mongoUri = mongoServer.getUri(), {
