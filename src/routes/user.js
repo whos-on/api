@@ -1,7 +1,7 @@
 const express = require("express")
 const User = require("../databases/schema/users")
 const router = express.Router()
-const { hashPassword, comparePassword } = require("../utils/helpers")
+const { hashPassword, comparePassword, jsonToUrlEncoded } = require("../utils/helpers")
 const crypto = require("crypto")
 
 //Handle logins:
@@ -73,6 +73,31 @@ router.post("/register", async (request, response) => {
             lastName,
             verificationCode: crypto.randomInt(100000, 999999)
         })
+
+        let verificationEmailEncoded = jsonToUrlEncoded({
+            from: "Who's On No Reply <noreply@" + process.env.MAILGUN_DOMAIN_NAME + ">",
+            to: newUser.email,
+            subject: "Verify your email address",
+            template: "whoson-emailverification",
+            "o:tag": "whoson-emailverification",
+            "h:X-Mailgun-Variables": JSON.stringify({
+                verificationCode: newUser.verificationCode,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+            })
+        })
+        let verificationEmail = await fetch(process.env.MAILGUN_DOMAIN_ENDPOINT + "/messages", {
+            method: "POST",
+            headers: {
+                Authorization: "Basic " + btoa("api:" + process.env.MAILGUN_API_KEY),
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": verificationEmailEncoded.length.toString()
+            },
+            body: verificationEmailEncoded,
+        })
+
+        if (!verificationEmail.ok) console.error("Failed to send verification email! " + verificationEmail.status + " " + verificationEmail.statusText)
+
         return response.status(201).send({ error: null })
     }
 })
