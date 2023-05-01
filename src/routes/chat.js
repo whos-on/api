@@ -281,7 +281,7 @@ router.get("/getMessage", async (request, response) => {
   Incoming: userId , message that need to search
   Outgoing: the chatID that content search keyword
 */
-router.get("/searchMessage", async (request, response) => {
+router.get("/search", async (request, response) => {
   const userId = request.body.id;
   const search = request.body.search;
   if (
@@ -303,8 +303,8 @@ router.get("/searchMessage", async (request, response) => {
 
   for (let i = 0; i < userObj.chats.length; i++) {
     const chatObj = await Chat.findById(userObj.chats[i]);
-    for (let j = 0; j < chatObj.messages.length; j++) {
-      let contents = chatObj.messages[j].contents;
+    for (let j = 0; j < chatObj.people.length; j++) {
+      let contents = chatObj.people[j];
       if (contents.toLowerCase().match(regex)) {
         _ret.push(chatObj.id);
         break;
@@ -313,7 +313,7 @@ router.get("/searchMessage", async (request, response) => {
   }
 
   if (_ret.length == 0) {
-    response.status(404).send({ error: "Can't find message" });
+    response.status(404).send({ error: "Can't find chats" });
     return;
   }
 
