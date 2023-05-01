@@ -202,4 +202,78 @@ router.post("/verify", async (req, res) => {
     return res.status(200).send({ error: null })
 })
 
+// Send a password reset email to the user
+// Incoming: user's email
+// Outgoing: nothing
+router.post("/resetpassword", async (req, res) => {
+    const email = req.body?.email || null
+
+    if (!email)
+        return res.status(400).send({ error: "No email provided" })
+
+    let user = await User.findOne({ email: email })
+
+
+    if (!user)
+        return res.status(400).send({ error: "No user found with that email" })
+
+    let resetEmailEncoded = jsonToUrlEncoded({
+        from: "Who's On No Reply <noreply@" + process.env.MAILGUN_DOMAIN_NAME + ">",
+        to: email,
+        subject: "Reset your password",
+        template: "whoson-passwordreset",
+        "o:tag": "whoson-passwordreset",
+        "h:X-Mailgun-Variables": JSON.stringify({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            resetLink: (process.env.NODE_ENV == "production"
+                ? "https://whoson.app/resetpassword/"
+                : "http://localhost:8788/resetpassword/")
+                + user._id
+        })
+    })
+
+    let resetEmail = await fetch(process.env.MAILGUN_DOMAIN_ENDPOINT + "/messages", {
+        method: "POST",
+        headers: {
+            Authorization: "Basic " + btoa("api:" + process.env.MAILGUN_API_KEY),
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Length": resetEmailEncoded.length.toString()
+        },
+        body: resetEmailEncoded,
+    })
+
+    if (!resetEmail.ok)
+        console.error("Failed to send reset email! " + resetEmail.status + " " + resetEmail.statusText)
+
+    return res.status(200).send({ error: null })
+})
+
+// Update user's password
+// Incoming: user's object _id, new password
+// Outgoing: nothing
+router.post("/updatepassword", async (req, res) => {
+    const id = req.body?.id || null
+    const password = req.body?.password || null
+
+    const passRegex = /^(?=.*\d)(?=.*[a-z]).{8,24}$/
+
+    if (!id)
+        return res.status(400).send({ error: "No id provided" })
+    if (!password)
+        return res.status(400).send({ error: "No password provided" })
+    if (!passRegex.test(password))
+        return res.status(400).send({ error: "Passwords must be at least 8 characters and contain one lowercase letter and one number." })
+
+    let user = await User.findById(id)
+
+    if (!user)
+        return res.status(400).send({ error: "No user found with that id" })
+
+    user.password = hashPassword(password)
+    await user.save()
+
+    return res.status(200).send({ error: null })
+})
+
 module.exports = router
