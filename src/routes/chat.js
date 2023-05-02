@@ -176,7 +176,7 @@ router.post("/refreshMessages", async (request, response) => {
     const userId = request.body.userId
     let userObj = await User.findById(userId)
     if (!userObj) {
-        response.status(404).send({ error: "User ID does not match any user!" })
+        return response.status(404).send({ error: "User ID does not match any user!" })
     }
     //Populate the chats for the user
     await User.findById(userId)
@@ -217,10 +217,10 @@ router.post("/refreshMessages", async (request, response) => {
                 }
             }
             //Success, send response
-            response.status(200).send({ chats: unreadChats, counts: unreadCounts })
+            return response.status(200).send({ chats: unreadChats, counts: unreadCounts })
         })
         .catch((err) => {
-            if (err) response.status(500).send({ error: err })
+            if (err) return response.status(500).send({ error: err })
         })
 })
 
