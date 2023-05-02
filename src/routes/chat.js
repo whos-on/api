@@ -238,11 +238,7 @@ router.post("/get", async (request, response) => {
         return
     }
 
-    const chatArray = user.chats
-    if (chatArray.length == 0) {
-        response.status(404).send({ error: "User doesn't have any conversation" })
-        return
-    }
+    const chatArray = user.chats || []
     // const chatArr = [];
 
     // for (let i = 0; i < chatArray.length; i++) {
@@ -252,7 +248,7 @@ router.post("/get", async (request, response) => {
     // if (chatArr.length == 0) {
     //   response.status(404).send({ error: "Not Success to get" });
     // }
-    response.status(200).send(user.chats)
+    response.status(200).send(chatArray)
 })
 
 /*
@@ -269,11 +265,7 @@ router.post("/getMessage", async (request, response) => {
         return
     }
 
-    if (chatRoom.messages.length == 0) {
-        response.status(404).send({ error: "Doesn't have any message" })
-        return
-    }
-    response.status(200).send(chatRoom.messages)
+    response.status(200).send(chatRoom.messages || [])
 })
 
 /*
@@ -317,6 +309,34 @@ router.post("/search", async (request, response) => {
     }
 
     response.status(200).send(_ret)
+})
+
+/**
+ * Get information about a chat room
+ * Incoming: chatID
+ * Outgoing: chatRoom object
+ */
+router.post("/info", async (req, res) => {
+    const chatID = req.body.chatID
+    if (!chatID)
+        return res.status(400).send({ error: "Empty request." })
+
+    let q = await Chat.findById(chatID)
+
+    if (!q)
+        return res.status(400).send({ error: "Chat not found." })
+
+    let people = []
+    for (let i = 0; i < q.people.length; i++) {
+        people[i] = await User.findOne({ username: q.people[i] })
+    }
+
+    res.status(200).send({
+        id: q.id,
+        people,
+        messages: q.messages,
+        lastChecked: q.lastChecked,
+    })
 })
 
 module.exports = router
