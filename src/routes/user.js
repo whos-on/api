@@ -24,6 +24,7 @@ router.post("/login", async (request, response) => {
             .status(200)
             .send({
                 id: userDB._id,
+                email: userDB.email,
                 username: userDB.username,
                 firstName: userDB.firstName,
                 lastName: userDB.lastName,
@@ -137,6 +138,7 @@ router.post("/info", async (req, res) => {
 
     return res.status(200).send({
         id: user._id,
+        email: user.email,
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
